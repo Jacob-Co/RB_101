@@ -1,0 +1,33 @@
+en: 
+  welcome: "Welcome to Calculator! Enter your name:"
+  valid_name: "Make sure to enter a valid name"
+  greetings: "Greetings "#{name}""
+  first_number: "Please input the first number: "
+  second_number: "Please input the second number: "
+  not_valid_number: "That is no a valid number. Please try again: "
+  operator_prompt: "What operation would you like to perform:
+      \n  1) add
+      \n  2) subtract
+      \n  3) multiply
+      \n  4) divide"
+  op_error_choice: 'Must choose 1, 2, 3, or 4'
+  result: "The result is "
+  use_again: 'Do you want to perform another calculation? (Y to calculate again)'
+  thank_you: 'Thank you for using the calculator'
+
+es: 
+  welcome: "Ola! Welcome to Calculator! Enter your name:"
+  valid_name: "Make sure to enter a valid name."
+  greetings: "Greetings "
+  first_number: "Please input the first number: "
+  second_number: "Please input the second number: "
+  not_valid_number: "That is no a valid number. Please try again: "
+  operator_prompt: "What operation would you like to perform:
+      \n  1) add
+      \n  2) subtract
+      \n  3) multiply
+      \n  4) divide"
+  op_error_choice: 'Must choose 1, 2, 3, or 4'
+  result: "The result is "
+  use_again: 'Do you want to perform another calculation? (Y to calculate again)'
+  thank_you: 'Thank you for using the calculator'
