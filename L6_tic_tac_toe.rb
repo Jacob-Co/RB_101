@@ -1,5 +1,6 @@
 require 'pry'
 
+PLAYERS = ['player', 'computer']
 PLAYER_MARKER = 'P'
 COMPUTER_MARKER = 'C'
 WINNING_LINES = [[1, 2, 3], [4, 5, 6], [7, 8, 9]] + # rows
@@ -64,34 +65,31 @@ def player_places_piece!(brd)
   brd[square] = PLAYER_MARKER
 end
 
-def immediate_threat_line(brd, marker)
+def find_at_risk_square(brd, marker)
   WINNING_LINES.each do |line|
-    threat_level = 0
-    free_space = 0
-    line.each do |space|
-      threat_level += 1 if brd[space] == marker
-      free_space += 1 if brd[space].is_a? Integer
-      return line if threat_level == 2 && free_space == 1
+    at_risk_square = 0
+    number_of_markers = 0
+    line.each do |square|
+      at_risk_square = square if brd[square].is_a? Integer
+      number_of_markers += 1 if brd[square] == marker
     end
+    return at_risk_square if number_of_markers == 2 && at_risk_square != 0
   end
-  false
-end
-
-def resolve_immediate_threat(brd, threat_line)
-  threat_line.each do |position|
-    brd[position] = COMPUTER_MARKER if brd[position].is_a? Integer
-  end
+  nil
 end
 
 def computer_places_piece!(brd)
-  if immediate_threat_line(brd, COMPUTER_MARKER)
-    resolve_immediate_threat(brd, immediate_threat_line(brd, COMPUTER_MARKER))
-  elsif immediate_threat_line(brd, PLAYER_MARKER)
-    resolve_immediate_threat(brd, immediate_threat_line(brd, PLAYER_MARKER))
+  if find_at_risk_square(brd, COMPUTER_MARKER)
+    square = find_at_risk_square(brd, COMPUTER_MARKER)
+  elsif find_at_risk_square(brd, PLAYER_MARKER)
+    square = find_at_risk_square(brd, PLAYER_MARKER)
+  elsif brd[5] == 5
+    brd[5] = COMPUTER_MARKER
   else
     square = empty_squares(brd).sample
-    brd[square] = COMPUTER_MARKER
   end
+
+  brd[square] = COMPUTER_MARKER
 end
 
 def board_full?(brd)
@@ -130,10 +128,26 @@ end
 
 player_score = [0]
 computer_score = [0]
+number_of_games = [0]
 
 loop do
   board = initialize_board
+  first_to_play = PLAYERS.sample
 
+  if number_of_games == [0]
+    system 'clear'
+    prompt "Welcome to Tic Tac Toe best of 5"
+    prompt "You will be facing of against the computer"
+    prompt "To register your move please type the corresponding number of the square you want to mark"
+    prompt "The first move goes to the #{first_to_play}"
+    loop do
+      prompt "Press y to begin"
+      answer = gets.chomp
+      break if answer.start_with?('y')
+    end
+  end
+
+  # game proper
   loop do
     display_board(board)
 
@@ -141,13 +155,14 @@ loop do
     break if someone_won?(board) || board_full?(board)
 
     computer_places_piece!(board)
-    
     break if someone_won?(board) || board_full?(board)
   end
+  # end of game proper
 
   display_board(board)
 
   if someone_won?(board) || board_full?(board)
+    number_of_games[0] += 1
     update_score(detect_winner(board), player_score, computer_score)
     display_score(player_score, computer_score)
 
@@ -158,7 +173,7 @@ loop do
     loop do
       prompt 'Press y for the next match'
       answer = gets.chomp
-      break if answer == 'y'
+      break if answer.start_with?('y')
     end
   end
 
@@ -172,3 +187,5 @@ loop do
 end
 
 prompt 'Thank you for playing, bye!'
+
+
