@@ -1,11 +1,12 @@
 require 'pry'
 
-PLAYERS = ['player', 'computer']
 PLAYER_MARKER = 'P'
 COMPUTER_MARKER = 'C'
 WINNING_LINES = [[1, 2, 3], [4, 5, 6], [7, 8, 9]] + # rows
                 [[2, 5, 8], [1, 4, 7], [3, 6, 9]] + # columns
                 [[1, 5, 9], [3, 5, 7]] # diagonals
+FIRST_MOVE_SETTING = "choose" # change to choose if you want the user to choose who goes first
+                              # choose player and computer if you want either to go first all the time
 
 def prompt(msg)
   puts "=> #{msg}"
@@ -128,43 +129,77 @@ end
 
 player_score = [0]
 computer_score = [0]
-number_of_games = [0]
+number_of_matches = [0]
+first_move = nil
 
 loop do
+  # game intro
   board = initialize_board
-  first_to_play = PLAYERS.sample
 
-  if number_of_games == [0]
+  if number_of_matches == [0]
     system 'clear'
     prompt "Welcome to Tic Tac Toe best of 5"
     prompt "You will be facing of against the computer"
     prompt "To register your move please type the corresponding number of the square you want to mark"
-    prompt "The first move goes to the #{first_to_play}"
-    loop do
+  end
+   
+  if FIRST_MOVE_SETTING == "choose" && first_move == nil
+    prompt "Who will go first? Player or computer? (p/c)"
+    loop do 
+      answer = gets.chomp
+      if answer.start_with?('p')
+        first_move = 'player'
+      elsif answer.start_with?('c')
+        first_move = 'computer'
+      else
+        prompt "Please type either p or c"
+      end
+      prompt "Press y to begin"
+      answer = gets.chomp
+      break if answer.start_with?('y')
+    end
+  elsif FIRST_MOVE_SETTING != 'choose' && number_of_matches == [0]
+    loop do 
+      first_move = FIRST_MOVE_SETTING
       prompt "Press y to begin"
       answer = gets.chomp
       break if answer.start_with?('y')
     end
   end
+  # game intro end
+  
+  # match proper
+  if first_move == 'player'
+    loop do
+      display_board(board)
 
-  # game proper
-  loop do
-    display_board(board)
+      player_places_piece!(board)
+      break if someone_won?(board) || board_full?(board)
 
-    player_places_piece!(board)
-    break if someone_won?(board) || board_full?(board)
+      computer_places_piece!(board)
+      break if someone_won?(board) || board_full?(board)
+    end
+  elsif first_move == 'computer'
+    loop do
+      computer_places_piece!(board)
+      break if someone_won?(board) || board_full?(board)
 
-    computer_places_piece!(board)
-    break if someone_won?(board) || board_full?(board)
+      display_board(board)
+
+      player_places_piece!(board)
+      break if someone_won?(board) || board_full?(board)
+    end
   end
-  # end of game proper
-
+  # match proper end
+  
   display_board(board)
-
-  if someone_won?(board) || board_full?(board)
-    number_of_games[0] += 1
-    update_score(detect_winner(board), player_score, computer_score)
-    display_score(player_score, computer_score)
+  update_score(detect_winner(board), player_score, computer_score)
+  display_score(player_score, computer_score)
+  
+  # match tracker
+  if (someone_won?(board) || board_full?(board)) && 
+     !(player_score == [5] || computer_score == [5])
+     number_of_matches[0] += 1
 
     prompt "You won this match" if detect_winner(board) == 'player'
     prompt "The computer won this match" if detect_winner(board) == 'computer'
@@ -176,16 +211,23 @@ loop do
       break if answer.start_with?('y')
     end
   end
+  # match tracker end
 
+  # game tracker
   if player_score == [5] || computer_score == [5]
+    number_of_matches[0] += 1
+    first_move = nil if FIRST_MOVE_SETTING == 'choose'
+
     prompt "Congratulations you won!" if player_score == [5]
     prompt "The computer won. Better luck next time" if computer_score == [5]
-  prompt "Do you want to play again? (y or n)"
-  answer = gets.chomp
-  break unless answer.downcase.start_with?('y')
+    player_score = [0]
+    computer_score = [0]
+
+    prompt "Do you want to play again? (y or n)"
+    play_again_answer = gets.chomp
+    break unless play_again_answer.downcase.start_with?('y')
   end
+  # game tracker end
 end
 
 prompt 'Thank you for playing, bye!'
-
-
