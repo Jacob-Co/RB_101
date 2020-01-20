@@ -1,12 +1,10 @@
-require 'pry'
-
 PLAYER_MARKER = 'P'
 COMPUTER_MARKER = 'C'
 WINNING_LINES = [[1, 2, 3], [4, 5, 6], [7, 8, 9]] + # rows
                 [[2, 5, 8], [1, 4, 7], [3, 6, 9]] + # columns
                 [[1, 5, 9], [3, 5, 7]] # diagonals
-FIRST_MOVE_SETTING = "choose" # change to choose if you want the user to choose who goes first
-                              # choose player and computer if you want either to go first all the time
+FIRST_MOVE_SETTING = "choose"
+# FIRST_MOVE_SETTING: accepts three choices, choose, player and computer
 
 def prompt(msg)
   puts "=> #{msg}"
@@ -42,15 +40,15 @@ def empty_squares(brd)
   brd.keys.select { |num| brd[num] == num }
 end
 
-def joinor(arr_selection, divider = ',', last_divider = 'or')
+def joinor(arr_selection, divider = ', ', last_divider = 'or ')
   if arr_selection == 0
-    return ''
+    ''
   elsif arr_selection.size == 1
-    return arr_selection[0]
+    arr_selection[0]
   elsif arr_selection.size == 2
-    return arr_selection.join(" #{last_divider} ")
+    arr_selection.join(" #{last_divider}")
   else
-    arr_selection.join("#{divider }").insert(-2, "#{last_divider} ")
+    arr_selection.join(divider).insert(-2, last_divider)
   end
 end
 
@@ -105,9 +103,8 @@ def detect_winner(brd)
   WINNING_LINES.each do |line|
     comparator_line = []
     line.each { |num| comparator_line << brd[num] }
-    return 'player' if comparator_line == [PLAYER_MARKER, PLAYER_MARKER, PLAYER_MARKER]
-    return 'computer' if comparator_line == [COMPUTER_MARKER, COMPUTER_MARKER,
-                                  COMPUTER_MARKER]
+    return 'player' if comparator_line.count(PLAYER_MARKER) == 3
+    return 'computer' if comparator_line.count(COMPUTER_MARKER) == 3
   end
 
   nil
@@ -150,52 +147,60 @@ loop do
     system 'clear'
     prompt "Welcome to Tic Tac Toe best of 5"
     prompt "You will be facing of against the computer"
-    prompt "To register your move please type the corresponding number of the square you want to mark"
+    prompt "To register your move please type the corresponding " \
+           "number of the square you want to mark"
   end
-   
-  if FIRST_MOVE_SETTING == "choose" && first_move == nil
+
+  if FIRST_MOVE_SETTING == "choose" && first_move.nil?
     prompt "Who will go first? Player or computer? (p/c)"
-    loop do 
+
+    loop do
       answer = gets.chomp
       if answer.start_with?('p')
         first_move = 'player'
+        break
       elsif answer.start_with?('c')
         first_move = 'computer'
+        break
       else
         prompt "Please type either p or c"
       end
+    end
+
+    loop do
       prompt "Press y to begin"
       answer = gets.chomp
       break if answer.start_with?('y')
     end
+
   elsif FIRST_MOVE_SETTING != 'choose' && number_of_matches == [0]
-    loop do 
-      first_move = FIRST_MOVE_SETTING
+    first_move = FIRST_MOVE_SETTING
+    loop do
       prompt "Press y to begin"
       answer = gets.chomp
       break if answer.start_with?('y')
     end
   end
   # game intro end
-  
+
   # match loop
   turn = first_move
   loop do
     display_board(board)
     place_piece!(board, turn)
-    turn = next_turn(turn) # test if this will affect who goes first after one match
+    turn = next_turn(turn)
     break if someone_won?(board) || board_full?(board)
   end
   # match loop end
-  
+
   display_board(board)
   update_score(detect_winner(board), player_score, computer_score)
   display_score(player_score, computer_score)
-  
+
   # match tracker
-  if (someone_won?(board) || board_full?(board)) && 
+  if (someone_won?(board) || board_full?(board)) &&
      !(player_score == [5] || computer_score == [5])
-     number_of_matches[0] += 1
+    number_of_matches[0] += 1
 
     prompt "You won this match" if detect_winner(board) == 'player'
     prompt "The computer won this match" if detect_winner(board) == 'computer'
