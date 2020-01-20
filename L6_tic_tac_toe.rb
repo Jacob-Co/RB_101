@@ -125,6 +125,16 @@ def display_score(plyr_score, comp_score)
   prompt "The score is player: #{plyr_score}, computer: #{comp_score}"
 end
 
+def place_piece!(brd, current_turn)
+  player_places_piece!(brd) if current_turn == 'player'
+  computer_places_piece!(brd) if current_turn == 'computer'
+end
+
+def next_turn(current_turn)
+  return 'player' if current_turn == 'computer'
+  return 'computer' if current_turn == 'player'
+end
+
 # Start of Program
 
 player_score = [0]
@@ -168,29 +178,15 @@ loop do
   end
   # game intro end
   
-  # match proper
-  if first_move == 'player'
-    loop do
-      display_board(board)
-
-      player_places_piece!(board)
-      break if someone_won?(board) || board_full?(board)
-
-      computer_places_piece!(board)
-      break if someone_won?(board) || board_full?(board)
-    end
-  elsif first_move == 'computer'
-    loop do
-      computer_places_piece!(board)
-      break if someone_won?(board) || board_full?(board)
-
-      display_board(board)
-
-      player_places_piece!(board)
-      break if someone_won?(board) || board_full?(board)
-    end
+  # match loop
+  turn = first_move
+  loop do
+    display_board(board)
+    place_piece!(board, turn)
+    turn = next_turn(turn) # test if this will affect who goes first after one match
+    break if someone_won?(board) || board_full?(board)
   end
-  # match proper end
+  # match loop end
   
   display_board(board)
   update_score(detect_winner(board), player_score, computer_score)
@@ -203,7 +199,7 @@ loop do
 
     prompt "You won this match" if detect_winner(board) == 'player'
     prompt "The computer won this match" if detect_winner(board) == 'computer'
-    prompt "It's a tie" if board_full?(board)
+    prompt "It's a tie" if board_full?(board) && !(someone_won?(board))
 
     loop do
       prompt 'Press y for the next match'
