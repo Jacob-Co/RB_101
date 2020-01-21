@@ -100,21 +100,23 @@ def total_hand_value(hand_values)
   total
 end
 
-def bust?(hand_values)
-  total_hand_value(hand_values) > 21
+def bust?(total_sum)
+  total_sum > 21
 end
 
-def chicken_dinner?(hand_values)
-  total_hand_value(hand_values) == 21
+def chicken_dinner?(total_sum)
+  total_sum == 21
 end
   
 
-def player_turn(hand_names1, hand_owner1, hand_names2, hand_owner2, hand_values1, dck)
+def show_table(hand_names1, hand_owner1, hand_names2, hand_owner2, priv)
   display_hand(hand_names1, hand_owner1)
   puts
-  display_hand(hand_names2, hand_owner2)
+  display_hand(hand_names2, hand_owner2, priv)
   puts
-  #loading
+end
+
+def player_hit_or_stay(hand_names1, hand_values1, hand_owner1, dck)
   prompt "Type 'h' to hit"
   prompt "Type 's' to stay"
   loop do
@@ -128,54 +130,54 @@ def player_turn(hand_names1, hand_owner1, hand_names2, hand_owner2, hand_values1
       dealing_cards
       deal_card(dck, hand_names1, hand_values1)
       prompt "You received: #{hand_names1[0]} "
-      loading
       display_hand(hand_names1, hand_owner1)
+      total_sum = total_hand_value(hand_values1)
       loading
-      break prompt 'You busted!' if bust?(hand_values1)
-      break prompt 'Winner, winner, chicken dinner!' if chicken_dinner?(hand_values1)
+      break prompt 'You busted!' if bust?(total_sum)
+      break prompt 'Winner, winner, chicken dinner!' if chicken_dinner?(total_sum)
       prompt "Hit again or stay? ('h'/'s')"
     end
   end
 end
 
-def dealer_turn(hand_names, hand_owner, hand_values, dck)
-  display_hand(hand_names, hand_owner, 'reveal')
-  loading
+def dealer_turn(hand_names, hand_owner, hand_values, total_sum, dck)
+  total_sum_d = total_sum
 
-  if total_hand_value(hand_values) < 17
+  if total_sum_d < 17
     prompt "The dealer's hand is below 17"
     loop do
       dealing_cards
       deal_card(dck, hand_names, hand_values)
+      total_sum_d = total_hand_value(hand_values)
       display_hand(hand_names, hand_owner, 'reveal')
       loading
-      if total_hand_value(hand_values) >= 17
-        break prompt 'The dealer busted' if bust?(hand_values)
-        break  
+      if total_sum_d >= 17
+        break prompt 'The dealer busted' if bust?(total_sum_d)
+        break prompt 'The dealer stays'
       end
       prompt "The dealer's hand is still below 17"
     end
   end
-  prompt 'The dealer stays' unless bust?(hand_values)
+  # prompt 'The dealer stays' unless bust?(hand_values)
 end
 
-def compare_scores(hand_values1, hand_values2)
-  if total_hand_value(hand_values1) < 22 && total_hand_value(hand_values2) < 22
-    if total_hand_value(hand_values1) > total_hand_value(hand_values2)
+def compare_scores(total_sum_p, total_sum_d)
+  if total_sum_p < 22 && total_sum_d < 22
+    if total_sum_p > total_sum_d
       return 'player' 
-    elsif total_hand_value(hand_values1) < total_hand_value(hand_values2)
+    elsif total_sum_p < total_sum_d
       return 'dealer'
-    else total_hand_value(hand_values1) == total_hand_value(hand_values2)
+    else total_sum_p == total_sum_d
       'tie'
     end
   end
 end
 
-def display_winner(hand_values1, hand_values2)
-  results = compare_scores(hand_values1, hand_values2)
-  if bust?(hand_values1) || results == 'dealer'
+def display_winner(total_sum_p, total_sum_d)
+  results = compare_scores(total_sum_p, total_sum_d)
+  if bust?(total_sum_p) || results == 'dealer'
     prompt "The dealer wins, better luck next time"
-  elsif bust?(hand_values2) || results == 'player'
+  elsif bust?(total_sum_d) || results == 'player'
     prompt "Congratulations you won!"
   elsif results == 'tie'
     prompt "It's a tie!"
@@ -203,6 +205,8 @@ loop do
   player_hand_names = []
   dealer_hand_values = []
   dealer_hand_names = []
+  player_total_hand_value = 0
+  dealer_total_hand_value = 0
   deck = []
   set_deck(deck)
 
@@ -210,6 +214,8 @@ loop do
 
   starting_deal(deck, player_hand_names, dealer_hand_names, 
                player_hand_values, dealer_hand_values)
+  player_total_hand_value = total_hand_value(player_hand_values)
+  dealer_total_hand_value = total_hand_value(dealer_hand_values)
 
   dealing_cards
   display_hand(player_hand_names, PLAYER)
@@ -217,41 +223,53 @@ loop do
   display_hand(dealer_hand_names, DEALER)
   loading
 
-  if chicken_dinner?(player_hand_values)
+  if chicken_dinner?(player_total_hand_value)
     prompt "How lucky, you got a Chicken Dinner on your starting hand!"
     loading
-  end
-
-  unless chicken_dinner?(player_hand_values)
+  else
     prompt "Time for your turn"
     output_ready_q
 
     system 'clear'
-    player_turn(player_hand_names, PLAYER, dealer_hand_names, DEALER, player_hand_values, deck)
+    show_table(player_hand_names, PLAYER, dealer_hand_names, DEALER, 'hidden')
+    player_hit_or_stay(player_hand_names, player_hand_values, PLAYER, deck)
+    player_total_hand_value = total_hand_value(player_hand_values)
   end
 
-  unless bust?(player_hand_values)
-  prompt "Time for the dealer's turn"
-  output_ready_q
+  unless bust?(player_total_hand_value)
+    prompt "Time for the dealer's turn"
+    output_ready_q
   
-  system 'clear'
-  dealer_turn(dealer_hand_names, DEALER, dealer_hand_values, deck)
+    system 'clear'
+    show_table(player_hand_names, PLAYER, dealer_hand_names, DEALER, 'hidden')
+    loading
+    dealer_turn(dealer_hand_names, DEALER, dealer_hand_values, dealer_total_hand_value, deck)
+    dealer_total_hand_value = total_hand_value(dealer_hand_values)
+
+    loading
+    prompt "Time to determine the winner!"
+    output_ready_q
   end
 
   loading
-  prompt "Time to determine the winner!"
-  output_ready_q
-
   system 'clear'
   prompt "Calculating the results now"
-  loading
-  display_hand(player_hand_names, PLAYER)
-  display_hand(dealer_hand_names, DEALER, 'reveal')
-  loading
-  display_winner(player_hand_values, dealer_hand_values)
 
+  unless bust?(player_total_hand_value) || bust?(dealer_total_hand_value)
+    loading
+    display_hand(player_hand_names, PLAYER)
+    display_hand(dealer_hand_names, DEALER, 'reveal')
+  end
 
-  # add comparison of hand values
+  loading
+
+  if bust?(player_total_hand_value)
+    prompt 'You busted'
+  elsif bust?(dealer_total_hand_value)
+    prompt 'The dealer busted'
+  end
+
+  display_winner(player_total_hand_value, dealer_total_hand_value)
 
   loading
   break if play_again_q == 'no'
